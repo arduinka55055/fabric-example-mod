@@ -133,17 +133,15 @@ public class ExampleMod implements ModInitializer {
 	*/
 	private byte[] sendmsgpack(String message){//and watch this bloat
 		buf= new byte[110];//it doesn't work
-        String magic=;
         System.arraycopy(magic.getBytes(),0,buf,0,8);//why is gradle so slow, 1 minute and still stuck at 0% yes, java is slow naturally. ignore it. is is normal behaviour
 		//cast the lvalue of the magic comparison code to string, maybe its comparing witht the ppointer
-		buf[8]='5';//try compile ok also how do i sync my local examplemod.java with this idk. ctrl s ? i am editing only this file ok
+		buf[8]='3';//try compile ok also how do i sync my local examplemod.java with this idk. ctrl s ? i am editing only this file ok
 
         buf[9]= (byte)10;//crutch to test code
 		for(int x = 10; x < message.length()+10; x = x + 1){
 			byte[] bytedMessage = message.getBytes();
 			buf[x]=bytedMessage[x-10];
 		}
-		String password="1234";
 		System.arraycopy(password.getBytes(),60,buf,0,password.length());
 		return buf;
 	}
@@ -153,7 +151,7 @@ public class ExampleMod implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 		System.out.println("Hello Fabric world!");
-		ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("foo").then(
+		ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal(".foo").then(
 				ClientCommandManager.argument("string", StringArgumentType.greedyString()).executes(context -> {
 					String message = StringArgumentType.getString(context, "string");
 					// Test error formatting
