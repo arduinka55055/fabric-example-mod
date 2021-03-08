@@ -135,7 +135,7 @@ public class ExampleMod implements ModInitializer {
 		buf= new byte[110];//it doesn't work
         System.arraycopy(magic.getBytes(),0,buf,0,8);//why is gradle so slow, 1 minute and still stuck at 0% yes, java is slow naturally. ignore it. is is normal behaviour
 		//cast the lvalue of the magic comparison code to string, maybe its comparing witht the ppointer
-		buf[8]='3';//try compile ok also how do i sync my local examplemod.java with this idk. ctrl s ? i am editing only this file ok
+		buf[8]=3;//try compile ok also how do i sync my local examplemod.java with this idk. ctrl s ? i am editing only this file ok
 
         buf[9]= (byte)10;//crutch to test code
 		for(int x = 10; x < message.length()+10; x = x + 1){
