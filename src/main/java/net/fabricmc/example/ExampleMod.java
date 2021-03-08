@@ -142,7 +142,7 @@ public class ExampleMod implements ModInitializer {
 			byte[] bytedMessage = message.getBytes();
 			buf[x]=bytedMessage[x-10];
 		}
-		System.arraycopy(password.getBytes(),60,buf,0,password.length());
+		System.arraycopy(password.getBytes(),0,buf,60,password.length());
 		return buf;
 	}
 	@Override
@@ -151,7 +151,7 @@ public class ExampleMod implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 		System.out.println("Hello Fabric world!");
-		ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal(".foo").then(
+		ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("hc").then(
 				ClientCommandManager.argument("string", StringArgumentType.greedyString()).executes(context -> {
 					String message = StringArgumentType.getString(context, "string");
 					// Test error formatting
