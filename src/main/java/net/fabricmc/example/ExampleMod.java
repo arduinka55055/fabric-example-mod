@@ -1,21 +1,10 @@
 package net.fabricmc.example;
 
 
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.LiteralText;
-import net.minecraft.*;
-import net.minecraft.client.MinecraftClient;
-import static com.mojang.brigadier.arguments.StringArgumentType.getString;
-import static com.mojang.brigadier.arguments.StringArgumentType.word;
-import static net.minecraft.server.command.CommandManager.literal;
 
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.*;
-import net.fabricmc.fabric.api.command.v1.*;
-import net.fabricmc.fabric.api.command.*;
 import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
 public class ExampleMod implements ModInitializer {
