@@ -1,193 +1,127 @@
 package net.fabricmc.example;
-import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import net.fabricmc.api.ModInitializer;
-import net.minecraft.text.LiteralText;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.world.WorldTickCallback;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.network.MessageType;
+import net.minecraft.text.LiteralText;
 import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
+import net.fabricmc.example.SocketConnector;
 import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-
-/*
-time for your server data, @CLEMENTTTTT
-int  len=sz;
-    pacclen=recvfrom(sockfd,(char*)&buffer,sz,MSG_WAITALL,(struct sockaddr*)&cliaddr,(unsigned int* __restrict)&len);
-    if(pacclen<sz)
-    {
-        std::cout<<"Faulty UDP packet! Expect len "<<sz<<" len="<<pacclen<<" IP="<<inet_ntoa(cliaddr.sin_addr)<<std::endl;
-        return;
+class HorizonThread extends Thread {
+    private SocketConnector sockConn;
+    HorizonThread(String name,SocketConnector socketConnector){
+        super(name);
+        System.out.println("init success!");
+        this.sockConn=socketConnector;
     }
-    std::cout << "Packet passed size check, checking magic" << std::endl;
-    if(buffer.magic!="HORIZON")
-    {
-        std::cout << "Faulty MAGIC " << buffer.magic << "!\n";
-        return;
-    }
-    switch(buffer.op_type)
-    {
-    case login:
-        if(!strcmp(PASS,buffer.deeta2))
-        {
-            std::cout << "Logic packet password match, adding user "<<buffer.deeta<<std::endl;
-            userdatabase.push_back(userentry(buffer.deeta,inet_ntoa(cliaddr.sin_addr)));
-            write_ack_packet(&cliaddr);
-        }
-        else
-        {
-            std::cout << "Login packet password invalid\n";
-            write_den_packet(&cliaddr);
-        }
-        break;
 
-    case logout:
+    public void run() {
 
-        for(i=0; i<userdatabase.size(); ++i)
-        {
-            if(userdatabase[i].ip==inet_ntoa(cliaddr.sin_addr))
-            {
-                found=true;
-                break;
+        while (true) {
+            System.out.println("LOOP happened");
+            try {
+                String out=this.sockConn.flushMessage();
+                ExampleMod.receive(out);
+                this.sleep(200);
+            } catch (InterruptedException | IOException e) {
+                System.out.println("Error happened");
             }
-
         }
-        if(found)
-        {
-            std::cout << "User " << userdatabase[i].username << "left the chat\n";
-            userdatabase.erase(userdatabase.begin()+i);
-            write_ack_packet(&cliaddr);
-        }
-        else{
-            std::cout << "client sending logout packet while not logged in\n";
-            write_den_packet(&cliaddr);
-        }
-        break;
-
-    case msg:
-        for(i=0; i<userdatabase.size(); ++i)
-        {
-            if(userdatabase[i].ip==inet_ntoa(cliaddr.sin_addr))
-            {
-                found=true;
-                break;
-            }
-
-        }
-        if(found)
-        {
-            std::cout << "User " << userdatabase[i].username << "posted message" << buffer.deeta << std::endl;
-        }
-        else{
-            std::cout << "client sending msg packet while not logged in\n";
-        }
-        break;
-
-    default:
-        std::cout << "Faulty packet op_type " << buffer.op_type << std::endl;
-        return;
-        break;
-
     }
+}
 
-
- */
-/*
-SO I'LL WRITE SENDER
-and other socket magic
-
-
- */
-/*
-someone do receiver thread
-
- */
+class Colors {
+    public static String Black = "\u00A70";
+    public static String Dark_Blue = "\u00A71";
+    public static String Dark_Aqua = "\u00A73";
+    public static String Dark_Red = "\u00A74";
+    public static String Dark_Purple = "\u00A75";
+    public static String Gold = "\u00A76";
+    public static String Gray = "\u00A77";
+    public static String Dark_Gray = "\u00A78";
+    public static String Blue = "\u00A79";
+    public static String Green = "\u00A7a";
+    public static String Aqua = "\u00A7b";
+    public static String Red = "\u00A7c";
+    public static String Light_Purple = "\u00A7d";
+    public static String Yellow = "\u00A7e";
+    public static String White = "\u00A7f";
+    public static String Obfuscated = "\u00A7k";
+    public static String Bold = "\u00A7l";
+    public static String Italic = "\u00A7o";
+    public static String Reset = "\u00A7r";
+    public static String r = "\u00A7r";
+}
 
 public class ExampleMod implements ModInitializer {
-	private DatagramSocket socket;
-	private InetAddress address;
-	private byte[] buf;
-	private int port = 0xDEAD;//here i am
-	private String magic="HORIZON\0";
-	private String password="nothing";
-
-    private enum packtypes
-    {
-        nil,ack,denied,login,logout,msg
-    };
-	/*HC_packet:
-			char magic[8]="HORIZON", //offset=0,size=8
-			unsigned char op_type; //offset=9,size=1
-			unsigned char ver; //offset=10,size=1
-			char deeta[50];    //offset=11,size=50
-			char deeta2[50];   //offset=61,size=50 //61 not 51 screw you!
-
-	enum packtypes
-{    0   1    2      3     4     5
-    nil,ack,denied,login,logout,msg
-};
-	*/
-	private byte[] sendmsgpack(String message){//and watch this bloat
-		buf= new byte[110];//it doesn't work
-        System.arraycopy(magic.getBytes(),0,buf,0,8);//why is gradle so slow, 1 minute and still stuck at 0% yes, java is slow naturally. ignore it. is is normal behaviour
-		//cast the lvalue of the magic comparison code to string, maybe its comparing witht the ppointer
-		buf[8]=3;//try compile ok also how do i sync my local examplemod.java with this idk. ctrl s ? i am editing only this file ok
-
-        buf[9]= (byte)10;//crutch to test code
-		for(int x = 10; x < message.length()+10; x = x + 1){
-			byte[] bytedMessage = message.getBytes();
-			buf[x]=bytedMessage[x-10];
-		}
-		System.arraycopy(password.getBytes(),0,buf,60,password.length());
-		return buf;
-	}
-	@Override
-	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
-		System.out.println("Hello Fabric world!");
-		ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("hc").then(
-				ClientCommandManager.argument("string", StringArgumentType.greedyString()).executes(context -> {
-					String message = StringArgumentType.getString(context, "string");
-					// Test error formatting
-					context.getSource().sendFeedback(new LiteralText("HoRiZoN: >" + message));
-
-							//get the localhost IP address, if server is running on some other IP, you need to use that
-							try {
+    private String incomingPrefix = Colors.Green+"[HoRiZoN %s]> %s"+Colors.r;
+    private String outcomingPrefix = Colors.Green+"[HoRiZoN %s]< %S"+Colors.r;
+    private String infoPrefix = Colors.Gold+"[!HoRiZoN!]: %s"+Colors.r;
+    private SocketConnector socketConnector = new SocketConnector();
 
 
-									socket = new DatagramSocket();
-									address = InetAddress.getByName("localhost");
+    private String getNick(CommandContext<FabricClientCommandSource> context){
+        return context.getSource().getPlayer().getName().asString();
+    }
+    public static void receive(String message){
+        MinecraftClient.getInstance().inGameHud.addChatMessage(MessageType.SYSTEM, new LiteralText(message), MinecraftClient.getInstance().player.getUuid());
 
-									buf = sendmsgpack(message);//message.getBytes();
-									java.net.DatagramPacket packet
-											= new DatagramPacket(buf, buf.length, address, port);
-									socket.send(packet);
-									packet = new DatagramPacket(buf, buf.length);
-									socket.receive(packet);
-									String received = new String(
-											packet.getData(), 0, packet.getLength());
+    }
+    private int sendmessage(CommandContext<FabricClientCommandSource> context) {
+        String message = StringArgumentType.getString(context, "text");
+        String nick = getNick(context);
+        context.getSource().sendFeedback(new LiteralText(String.format(outcomingPrefix,nick,message)));
+        try {
+            socketConnector.send(message);
+            //context.getSource().sendFeedback(Text.of(received));
+        } catch (IOException e) {
+            context.getSource().sendFeedback(Text.of(e.getMessage()));
+        }
+        return 0;
+    }
 
-									socket.close();
-								return 0;
-							}catch (IOException e) {
-								context.getSource().sendError(Text.of(e.getMessage()));
-									//e.printStackTrace();
-								return 0;
-								}
+    private int sendlogin(CommandContext<FabricClientCommandSource> context) {
+        String password = StringArgumentType.getString(context, "password");
+        String nick = getNick(context);
+        context.getSource().sendFeedback(new LiteralText(String.format(infoPrefix,"Logging in...")));
 
-				})
-		));
+        try {
+            if(socketConnector.login(nick,password)){
+                new HorizonThread("HoRiZoNoNtOp!",this.socketConnector).start();
+                System.out.println("login happened");
+            }
+            else {
+                context.getSource().sendFeedback(new LiteralText(String.format(infoPrefix,"Login Failed!")));
+            }
+        } catch (IOException e) {
+            context.getSource().sendFeedback(Text.of(e.getMessage()));
+        }
+        return 0;
+    }
 
-		// ChatHud chatHud = MinecraftClient.getInstance().inGameHud.getChatHud();
-		// LiteralText prefix = new LiteralText(".");
-		// chatHud.addMessage(prefix.append("a"));
+    @Override
+    public void onInitialize() {
+        // This code runs as soon as Minecraft is in a mod-load-ready state.
+        // However, some things (like resources) may still be uninitialized.
+        // Proceed with mild caution.
+        System.out.println("Hello Fabric world!");
+        ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("hclogin").then(
+                ClientCommandManager.argument("password", StringArgumentType.greedyString()).executes(this::sendlogin)));
+        ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("hc").then(
+                ClientCommandManager.argument("text", StringArgumentType.greedyString()).executes(this::sendmessage)));
 
-	}
+        // ChatHud chatHud = MinecraftClient.getInstance().inGameHud.getChatHud();
+        // LiteralText prefix = new LiteralText(".");
+        // chatHud.addMessage(prefix.append("a"));
+
+    }
 
 }
