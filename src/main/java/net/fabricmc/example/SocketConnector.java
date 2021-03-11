@@ -56,7 +56,9 @@ public class SocketConnector {
         buf = new byte[110];
         DatagramPacket packet = new DatagramPacket(buf, buf.length);
         socket.receive(packet);
-        String message= new String(packet.getData(), 0, packet.getLength());
+        String message= new String(packet.getData(), 11, 50);
+        message = message.split("\0")[0];
+
         return message;
     }
 }
