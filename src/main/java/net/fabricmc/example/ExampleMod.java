@@ -90,11 +90,12 @@ public class ExampleMod implements ModInitializer {
 
     private int sendlogin(CommandContext<FabricClientCommandSource> context) {
         String password = StringArgumentType.getString(context, "password");
+        String ip = StringArgumentType.getString(context, "ip");
         String nick = getNick(context);
         context.getSource().sendFeedback(new LiteralText(String.format(infoPrefix,"Logging in...")));
 
         try {
-            if(socketConnector.login(nick,password)){
+            if(socketConnector.login(ip,nick,password)){
                 new HorizonThread("HoRiZoNoNtOp!",this.socketConnector).start();
                 System.out.println("login happened");
             }
@@ -113,8 +114,12 @@ public class ExampleMod implements ModInitializer {
         // However, some things (like resources) may still be uninitialized.
         // Proceed with mild caution.
         System.out.println("Hello Fabric world!");
-        ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("hclogin").then(
-                ClientCommandManager.argument("password", StringArgumentType.greedyString()).executes(this::sendlogin)));
+        ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("hclogin") .then(ClientCommandManager.argument("ip", StringArgumentType.word())
+                        .then(ClientCommandManager.argument("password", StringArgumentType.word())
+                                .executes(this::sendlogin)
+                                )
+                        )
+                );
         ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("hc").then(
                 ClientCommandManager.argument("text", StringArgumentType.greedyString()).executes(this::sendmessage)));
 

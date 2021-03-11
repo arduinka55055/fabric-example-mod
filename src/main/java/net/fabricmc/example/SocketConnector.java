@@ -34,9 +34,9 @@ public class SocketConnector {
         System.arraycopy(data2.getBytes(), 0, buf, 60, Math.min(data2.length(), 50));
         return buf;
     }
-    public boolean login(String nick, String passcode) throws IOException {
+    public boolean login(String ip,String nick, String passcode) throws IOException {
         socket = new DatagramSocket();
-        address = InetAddress.getByName("localhost");
+        address = InetAddress.getByName(ip);
 
         buf = sendpack((byte) 3, nick, passcode);
         DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
